@@ -109,12 +109,16 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import StatsDashboard from '../components/accountability/StatsDashboard';
 import HabitCard from '../components/accountability/HabitCard';
 import QuickStats from '../components/accountability/QuickStats';
+import HabitList from '../components/accountability/HabitList';
+import { StyledTextField } from '../components/accountability/StyledComponents';
+import { StatusChip, calculateHabitStats } from '../components/accountability/StatusChip';
 import { 
   useWeeklyStats, 
   useCompletionHistory, 
   useHabitProgress, 
   useOptimisticUpdate 
 } from '../hooks/useAccountabilityStats';
+import { useAccountabilityActions } from '../hooks/useAccountabilityActions';
 import { 
   calculateStreak, 
   calculateCompletionRate, 
@@ -127,108 +131,7 @@ import {
 
 
 
-// Add new styled components
-const GlowingText = styled(Typography)(({ theme, color = '#fff' }) => ({
-  fontWeight: 800,
-  color: color,
-  textShadow: `0 0 20px ${alpha(color, 0.5)}`,
-  transition: 'all 0.3s ease',
-}));
 
-const MinimalisticHabitCard = styled(Paper)(({ theme }) => ({
-  padding: '16px',
-  borderRadius: '24px',  // Increased border radius to match design
-  background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
-  backdropFilter: 'blur(10px)',
-  border: `1px solid ${alpha('#fff', 0.1)}`,
-  transition: 'all 0.2s ease',
-  cursor: 'pointer',
-  '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: `0 4px 20px ${alpha('#000', 0.2)}`
-  }
-}));
-
-const StyledTextField = styled(TextField)({
-  '& .MuiOutlinedInput-root': {
-    '& fieldset': {
-      borderColor: alpha('#fff', 0.3),
-      borderRadius: 12,
-    },
-    '&:hover fieldset': {
-      borderColor: alpha('#9b59b6', 0.5),
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: '#9b59b6',
-    },
-  },
-  '& .MuiInputLabel-root': {
-    color: alpha('#fff', 0.7),
-    '&.Mui-focused': {
-      color: '#9b59b6',
-    },
-  },
-  '& .MuiOutlinedInput-input': {
-    color: '#fff',
-  },
-});
-
-
-
-
-
-// Update the HabitList component to be more minimalistic
-const HabitList = ({ habits, onComplete, onEdit, onDelete, onNavigate, dailyStatus, onViewPartnerHabits }) => {
-  return (
-    <Box>
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        mb: 3
-      }}>
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>
-          My Habits
-        </Typography>
-        
-        {/* Add Partner Habits Button */}
-        {onViewPartnerHabits && (
-          <Button
-            variant="outlined"
-            startIcon={<VisibilityIcon />}
-            onClick={onViewPartnerHabits}
-            size="small"
-            sx={{
-              color: '#fff',
-              borderColor: alpha('#fff', 0.3),
-              '&:hover': {
-                borderColor: '#fff',
-                bgcolor: alpha('#fff', 0.1)
-              }
-            }}
-          >
-            Partner's Habits
-          </Button>
-        )}
-      </Box>
-
-      <Grid container spacing={2}>
-        {habits.map((habit) => (
-          <Grid item xs={12} key={habit.id}>
-            <HabitCard
-              habit={habit}
-              onComplete={onComplete}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onNavigate={onNavigate}
-              dailyStatus={dailyStatus}
-            />
-          </Grid>
-        ))}
-      </Grid>
-    </Box>
-  );
-};
 
 
 
@@ -252,10 +155,19 @@ export default function AccountabilityListPage() {
   const [newWeeklyGoal, setNewWeeklyGoal] = useState(7);
   const [myStars, setMyStars] = useState(0);
   const [showStarEarned, setShowStarEarned] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Add state for partner habits dialog
   const [partnerHabitsOpen, setPartnerHabitsOpen] = useState(false);
+
+  // Use the extracted actions hook
+  const {
+    handleCompleteTask,
+    handleCreateTask: createTask,
+    handleUpdateTask: updateTask,
+    handleDeleteTask,
+    handleToggleComplete,
+    isSubmitting
+  } = useAccountabilityActions(user, tasks, dailyStatus, setError, setShowStarEarned);
 
   // Force /login if not authenticated
   useEffect(() => {
@@ -358,207 +270,44 @@ export default function AccountabilityListPage() {
     return () => unsubStars();
   }, [user?.uid]);
 
-  const handleCompleteTask = async (taskId, isComplete) => {
-    if (!user) {
-      setError("You must be logged in to complete tasks");
-      return;
-    }
-
-    try {
-      // Get today's date in YYYY-MM-DD format
-      const today = format(new Date(), 'yyyy-MM-dd');
-      
-      // Check if a status for today already exists
-      const statusQuery = query(
-        collection(db, "dailyStatus"),
-        where("habitId", "==", taskId),
-        where("owner", "==", user.uid),
-        where("date", "==", today)
-      );
-      
-      const statusSnapshot = await getDocs(statusQuery);
-      
-      // Create a batch to update multiple documents atomically
-      const batch = writeBatch(db);
-      
-      if (statusSnapshot.empty) {
-        // No status for today exists, create a new one
-        const newStatusRef = doc(collection(db, "dailyStatus"));
-        batch.set(newStatusRef, {
-          habitId: taskId,
-          owner: user.uid,
-          date: today,
-          done: isComplete,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-      } else {
-        // Update existing status
-        const statusDoc = statusSnapshot.docs[0];
-        batch.update(doc(db, "dailyStatus", statusDoc.id), {
-          done: isComplete,
-          updatedAt: serverTimestamp()
-        });
-      }
-      
-      // Update the task's isTodayComplete field
-      const taskRef = doc(db, "accountability", taskId);
-      batch.update(taskRef, {
-        isTodayComplete: isComplete,
-        updatedAt: serverTimestamp()
-      });
-      
-      // Commit the batch
-      await batch.commit();
-      
-      // Check if completing this task meets the weekly goal
-      const task = tasks.find(t => t.id === taskId);
-      if (task && isComplete) {
-        const weekStart = startOfWeek(new Date(), { weekStartsOn: 0 });
-        const weekEnd = endOfWeek(new Date(), { weekStartsOn: 0 });
-        const taskStatuses = dailyStatus[taskId] || [];
-        
-        // Calculate weekly completions including the one we just added
-        const weeklyCompletions = calculateWeeklyCompletions(
-          weekStart, 
-          weekEnd, 
-          [...taskStatuses, { date: today, done: true }],
-          false
-        );
-        
-        const weeklyGoal = task.weeklyGoal || 7;
-        
-        // If weekly goal is met exactly, show star earned notification
-        if (weeklyCompletions === weeklyGoal) {
-          setShowStarEarned(true);
-          setTimeout(() => setShowStarEarned(false), 5000);
-        }
-      }
-    } catch (error) {
-      console.error("Error completing task:", error);
-      setError("Failed to update task status");
-    }
-  };
-
-  const handleCreateTask = async (e) => {
+  // Wrapper functions to handle form logic
+  const handleCreateTaskSubmit = async (e) => {
     e.preventDefault();
-    if (!user?.uid || !newTitle.trim()) return;
+    if (!newTitle.trim()) return;
 
-    try {
-      setIsSubmitting(true);
-      
-      // Ensure weeklyGoal is a valid number
-      const weeklyGoalValue = parseInt(newWeeklyGoal) || 7;
-      
-      const taskRef = collection(db, "accountability");
-      await addDoc(taskRef, {
-        title: newTitle.trim(),
-        description: newDescription.trim(),
-        weeklyGoal: weeklyGoalValue,
-        owner: user.uid,
-        isTodayComplete: false,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
+    const formData = {
+      title: newTitle,
+      description: newDescription,
+      weeklyGoal: newWeeklyGoal
+    };
 
+    const success = await createTask(e, formData);
+    if (success) {
       setNewTitle("");
       setNewDescription("");
       setNewWeeklyGoal(7);
       setOpenCreate(false);
-      setIsSubmitting(false);
-    } catch (error) {
-      console.error("Error creating task:", error);
-      setError("Failed to create task");
-      setIsSubmitting(false);
     }
   };
 
-  const handleUpdateTask = async (e) => {
+  const handleUpdateTaskSubmit = async (e) => {
     e.preventDefault();
-    if (!user?.uid || !editingTask || !newTitle.trim()) return;
+    if (!newTitle.trim()) return;
 
-    try {
-      setIsSubmitting(true);
-      const taskRef = doc(db, "accountability", editingTask.id);
-      
-      // Ensure weeklyGoal is a number and has a valid value
-      const weeklyGoalValue = parseInt(newWeeklyGoal) || 7;
-      
-      await updateDoc(taskRef, {
-        title: newTitle,
-        description: newDescription,
-        weeklyGoal: weeklyGoalValue,
-        updatedAt: serverTimestamp()
-      });
+    const formData = {
+      title: newTitle,
+      description: newDescription,
+      weeklyGoal: newWeeklyGoal
+    };
 
+    const success = await updateTask(e, editingTask, formData);
+    if (success) {
       setEditingTask(null);
       setNewTitle("");
       setNewDescription("");
       setNewWeeklyGoal(7);
       setOpenDialog(false);
-      setIsSubmitting(false);
-    } catch (error) {
-      console.error("Error updating task:", error);
-      setError("Failed to update task");
-      setIsSubmitting(false);
     }
-  };
-
-  const handleDeleteTask = async (taskId) => {
-    if (!user?.uid) return;
-
-    try {
-      const taskRef = doc(db, 'accountability', taskId);
-      await deleteDoc(taskRef);
-    } catch (error) {
-      console.error("Error deleting task:", error);
-      setError("Failed to delete task");
-    }
-  };
-
-  const handleToggleComplete = async (task) => {
-    if (!user?.uid || !task) return;
-
-    try {
-      const taskRef = doc(db, 'accountability', task.id);
-      await updateDoc(taskRef, {
-        completed: !task.completed,
-        updatedAt: serverTimestamp()
-      });
-    } catch (error) {
-      console.error("Error toggling task:", error);
-      setError("Failed to toggle task");
-    }
-  };
-
-  // Add these status chip components
-  const StatusChip = ({ label, color }) => (
-    <Chip
-      label={label}
-      size="small"
-      sx={{
-        bgcolor: alpha(color, 0.1),
-        color: color,
-        borderRadius: '8px',
-        '& .MuiChip-label': {
-          px: 2,
-        }
-      }}
-    />
-  );
-
-  // Helper function to calculate stats for a habit
-  const calculateHabitStats = (habitId) => {
-    const statuses = dailyStatus[habitId] || [];
-    const streak = calculateStreak(
-      statuses.map(s => ({ date: s.date, done: s.done })),
-      statuses.some(s => s.date === format(new Date(), 'yyyy-MM-dd') && s.done)
-    );
-    return {
-      streak: streak.currentStreak,
-      completionRate: statuses.length ? 
-        Math.round((statuses.filter(s => s.done).length / statuses.length) * 100) : 0
-    };
   };
 
   if (loading || partnerLoading) {
@@ -652,7 +401,7 @@ export default function AccountabilityListPage() {
         }}
       >
         <DialogTitle>Create New Habit</DialogTitle>
-        <form onSubmit={handleCreateTask}>
+        <form onSubmit={handleCreateTaskSubmit}>
           <DialogContent>
             <TextField
               autoFocus
@@ -755,7 +504,7 @@ export default function AccountabilityListPage() {
         }}
       >
         <DialogTitle>Edit Habit</DialogTitle>
-        <form onSubmit={handleUpdateTask}>
+        <form onSubmit={handleUpdateTaskSubmit}>
           <DialogContent>
             <TextField
               autoFocus
