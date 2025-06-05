@@ -107,6 +107,8 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import PartnerHabitsDialog from '../components/PartnerHabitsDialog';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import StatsDashboard from '../components/accountability/StatsDashboard';
+import HabitCard from '../components/accountability/HabitCard';
+import QuickStats from '../components/accountability/QuickStats';
 
 // Helper functions (defined outside components)
 const calculateStreak = (dailyStatus, isTodayComplete) => {
@@ -351,7 +353,7 @@ const GlowingText = styled(Typography)(({ theme, color = '#fff' }) => ({
   transition: 'all 0.3s ease',
 }));
 
-const HabitCard = styled(Paper)(({ theme }) => ({
+const MinimalisticHabitCard = styled(Paper)(({ theme }) => ({
   padding: '16px',
   borderRadius: '24px',  // Increased border radius to match design
   background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
@@ -389,150 +391,7 @@ const StyledTextField = styled(TextField)({
   },
 });
 
-// Add new components
-const QuickStats = ({ stats }) => {
-  const theme = useTheme();
-  
-  return (
-    <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: { xs: 3, md: 4 } }}>
-      <Grid item xs={6} sm={6} md={3}>
-        <Box
-          sx={{
-            p: { xs: 2, sm: 3 },
-            borderRadius: 3,
-            backgroundColor: alpha('#fff', 0.07),
-            backdropFilter: 'blur(10px)',
-            border: `1px solid ${alpha('#fff', 0.1)}`,
-            transition: 'all 0.3s ease',
-            height: '100%',
-            '&:hover': {
-              backgroundColor: alpha('#fff', 0.09),
-              transform: 'translateY(-2px)'
-            }
-          }}
-        >
-          <Stack spacing={1}>
-            <Typography variant="overline" sx={{ 
-              color: alpha('#fff', 0.85),
-              fontSize: { xs: '0.65rem', sm: '0.75rem' }
-            }}>
-              Completion Rate
-            </Typography>
-            <Typography variant="h4" sx={{ 
-              fontWeight: 700, 
-              color: '#fff',
-              fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' }
-            }}>
-              {stats?.overallCompletion || 0}%
-            </Typography>
-          </Stack>
-        </Box>
-      </Grid>
-      
-      <Grid item xs={6} sm={6} md={3}>
-        <Box
-          sx={{
-            p: { xs: 2, sm: 3 },
-            borderRadius: 3,
-            backgroundColor: alpha('#fff', 0.07),
-            backdropFilter: 'blur(10px)',
-            border: `1px solid ${alpha('#fff', 0.1)}`,
-            transition: 'all 0.3s ease',
-            height: '100%',
-            '&:hover': {
-              backgroundColor: alpha('#fff', 0.09),
-              transform: 'translateY(-2px)'
-            }
-          }}
-        >
-          <Stack spacing={1}>
-            <Typography variant="overline" sx={{ 
-              color: alpha('#fff', 0.85),
-              fontSize: { xs: '0.65rem', sm: '0.75rem' }
-            }}>
-              Best Streak
-            </Typography>
-            <Typography variant="h4" sx={{ 
-              fontWeight: 700, 
-              color: '#fff',
-              fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' }
-            }}>
-              {stats?.bestStreak || 0} days
-            </Typography>
-          </Stack>
-        </Box>
-      </Grid>
-      
-      <Grid item xs={6} sm={6} md={3}>
-        <Box
-          sx={{
-            p: { xs: 2, sm: 3 },
-            borderRadius: 3,
-            backgroundColor: alpha('#fff', 0.07),
-            backdropFilter: 'blur(10px)',
-            border: `1px solid ${alpha('#fff', 0.1)}`,
-            transition: 'all 0.3s ease',
-            height: '100%',
-            '&:hover': {
-              backgroundColor: alpha('#fff', 0.09),
-              transform: 'translateY(-2px)'
-            }
-          }}
-        >
-          <Stack spacing={1}>
-            <Typography variant="overline" sx={{ 
-              color: alpha('#fff', 0.85),
-              fontSize: { xs: '0.65rem', sm: '0.75rem' }
-            }}>
-              Active Habits
-            </Typography>
-            <Typography variant="h4" sx={{ 
-              fontWeight: 700, 
-              color: '#fff',
-              fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' }
-            }}>
-              {stats?.totalHabits || 0}
-            </Typography>
-          </Stack>
-        </Box>
-      </Grid>
-      
-      <Grid item xs={6} sm={6} md={3}>
-        <Box
-          sx={{
-            p: { xs: 2, sm: 3 },
-            borderRadius: 3,
-            backgroundColor: alpha('#fff', 0.07),
-            backdropFilter: 'blur(10px)',
-            border: `1px solid ${alpha('#fff', 0.1)}`,
-            transition: 'all 0.3s ease',
-            height: '100%',
-            '&:hover': {
-              backgroundColor: alpha('#fff', 0.09),
-              transform: 'translateY(-2px)'
-            }
-          }}
-        >
-          <Stack spacing={1}>
-            <Typography variant="overline" sx={{ 
-              color: alpha('#fff', 0.85),
-              fontSize: { xs: '0.65rem', sm: '0.75rem' }
-            }}>
-              Weekly Progress
-            </Typography>
-            <Typography variant="h4" sx={{ 
-              fontWeight: 700, 
-              color: '#fff',
-              fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' }
-            }}>
-              {stats?.weeklyProgress || 0}%
-            </Typography>
-          </Stack>
-        </Box>
-      </Grid>
-    </Grid>
-  );
-};
+
 
 // Fix the calculateWeeklyCompletions function
 const calculateWeeklyCompletions = (weekStart, weekEnd, statuses, includePending = false) => {
@@ -621,7 +480,7 @@ const HabitList = ({ habits, onComplete, onEdit, onDelete, onNavigate, dailyStat
       <Grid container spacing={2}>
         {habits.map((habit) => (
           <Grid item xs={12} key={habit.id}>
-            <MinimalisticHabitCard
+            <HabitCard
               habit={habit}
               onComplete={onComplete}
               onEdit={onEdit}
@@ -636,192 +495,7 @@ const HabitList = ({ habits, onComplete, onEdit, onDelete, onNavigate, dailyStat
   );
 };
 
-// Create a more minimalistic habit card
-const MinimalisticHabitCard = ({ habit, onComplete, onEdit, onDelete, onNavigate, dailyStatus }) => {
-  const theme = useTheme();
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [localIsTodayComplete, setLocalIsTodayComplete] = useState(false);
-  
-  // Check if today's status exists in dailyStatus
-  useEffect(() => {
-    const today = format(new Date(), 'yyyy-MM-dd');
-    const habitStatuses = dailyStatus[habit.id] || [];
-    const todayStatus = habitStatuses.find(s => s.date === today);
-    setLocalIsTodayComplete(todayStatus?.done || false);
-  }, [dailyStatus, habit.id]);
 
-  const handleToggle = async (e) => {
-    e.stopPropagation();
-    setIsUpdating(true);
-    
-    try {
-      // Toggle the local state immediately for better UX
-      setLocalIsTodayComplete(!localIsTodayComplete);
-      
-      // Call the parent handler to update Firestore
-      await onComplete(habit.id, !localIsTodayComplete);
-    } catch (error) {
-      // Revert local state if there's an error
-      setLocalIsTodayComplete(localIsTodayComplete);
-      console.error("Error toggling habit:", error);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  // Calculate streak and completion rate
-  const habitStatuses = dailyStatus[habit.id] || [];
-  const { currentStreak } = calculateStreak(habitStatuses, localIsTodayComplete);
-  
-  // Calculate weekly progress
-  const weekStart = startOfWeek(new Date(), { weekStartsOn: 0 });
-  const weekEnd = endOfWeek(new Date(), { weekStartsOn: 0 });
-  const weeklyCompletions = calculateWeeklyCompletions(weekStart, weekEnd, habitStatuses, false);
-  const weeklyGoal = habit.weeklyGoal || 7;
-
-  return (
-    <Paper
-      sx={{
-        p: 2,
-        borderRadius: 2,
-        backgroundColor: alpha('#fff', 0.05),
-        backdropFilter: 'blur(10px)',
-        border: `1px solid ${alpha('#fff', 0.1)}`,
-        transition: 'all 0.2s ease',
-        '&:hover': {
-          backgroundColor: alpha('#fff', 0.08),
-          boxShadow: `0 4px 12px ${alpha('#000', 0.2)}`
-        }
-      }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, cursor: 'pointer' }} onClick={() => onNavigate(habit.id)}>
-          <Box sx={{ mr: 2 }}>
-            <IconButton
-              onClick={(e) => {
-                e.stopPropagation();
-                handleToggle(e);
-              }}
-              disabled={isUpdating}
-              sx={{ 
-                color: localIsTodayComplete ? '#4caf50' : alpha('#fff', 0.7),
-                '&:hover': {
-                  backgroundColor: alpha('#fff', 0.1)
-                }
-              }}
-            >
-              {isUpdating ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : localIsTodayComplete ? (
-                <CheckCircleIcon />
-              ) : (
-                <RadioButtonUncheckedIcon />
-              )}
-            </IconButton>
-          </Box>
-          
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="h6" sx={{ 
-              fontWeight: 600,
-              color: localIsTodayComplete ? alpha('#fff', 0.7) : '#fff',
-              textDecoration: localIsTodayComplete ? 'line-through' : 'none'
-            }}>
-              {habit.title}
-            </Typography>
-            
-            {habit.description && (
-              <Typography variant="body2" sx={{ 
-                color: alpha('#fff', 0.7),
-                textDecoration: localIsTodayComplete ? 'line-through' : 'none'
-              }}>
-                {habit.description}
-              </Typography>
-            )}
-          </Box>
-        </Box>
-        
-        <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
-          <Box sx={{ mr: 2 }}>
-            <EnhancedStarCompletion
-              weeklyGoal={weeklyGoal}
-              completedDays={weeklyCompletions}
-              size={40}
-              isUpdating={isUpdating}
-            />
-          </Box>
-          
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            alignItems: 'center', 
-            mr: 2,
-            minWidth: 60
-          }}>
-            <Typography variant="caption" sx={{ color: alpha('#fff', 0.7) }}>
-              {weeklyCompletions}/{weeklyGoal}
-            </Typography>
-            <Typography variant="caption" sx={{ color: alpha('#fff', 0.5) }}>
-              days
-            </Typography>
-          </Box>
-          
-          <Box sx={{ display: 'flex' }}>
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(habit);
-              }}
-              sx={{ 
-                color: alpha('#fff', 0.6),
-                '&:hover': { color: '#fff' }
-              }}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-            
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(habit.id);
-              }}
-              sx={{ 
-                color: alpha('#fff', 0.6),
-                '&:hover': { color: '#f44336' }
-              }}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Box>
-        </Box>
-      </Box>
-      
-      <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <WhatshotIcon sx={{ color: '#ff9800', fontSize: '1rem', mr: 0.5 }} />
-          <Typography variant="caption" sx={{ color: alpha('#fff', 0.7) }}>
-            {currentStreak} day streak
-          </Typography>
-        </Box>
-        
-        <LinearProgress
-          variant="determinate"
-          value={(weeklyCompletions / weeklyGoal) * 100}
-          sx={{
-            width: '40%',
-            height: 4,
-            borderRadius: 2,
-            bgcolor: alpha('#fff', 0.1),
-            '& .MuiLinearProgress-bar': {
-              bgcolor: weeklyCompletions >= weeklyGoal ? '#4caf50' : '#2196f3'
-            }
-          }}
-        />
-      </Box>
-    </Paper>
-  );
-};
 
 
 
