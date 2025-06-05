@@ -109,241 +109,23 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import StatsDashboard from '../components/accountability/StatsDashboard';
 import HabitCard from '../components/accountability/HabitCard';
 import QuickStats from '../components/accountability/QuickStats';
+import { 
+  useWeeklyStats, 
+  useCompletionHistory, 
+  useHabitProgress, 
+  useOptimisticUpdate 
+} from '../hooks/useAccountabilityStats';
+import { 
+  calculateStreak, 
+  calculateCompletionRate, 
+  calculateBestDays, 
+  calculateMonthlyTrend,
+  calculateWeeklyCompletions
+} from '../utils/accountabilityHelpers';
 
-// Helper functions (defined outside components)
-const calculateStreak = (dailyStatus, isTodayComplete) => {
-  if (!dailyStatus || !dailyStatus.length) return { currentStreak: 0, longestStreak: 0 };
-  
-  // Sort by date in descending order (newest first)
-  const sortedStatuses = [...dailyStatus].sort((a, b) => 
-    new Date(b.date) - new Date(a.date)
-  );
-  
-  // Start with today's status
-  let currentStreak = isTodayComplete ? 1 : 0;
-  
-  // If today is not complete, check if yesterday was
-  if (!isTodayComplete) {
-    const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
-    const yesterdayStatus = sortedStatuses.find(s => s.date === yesterday);
-    if (!yesterdayStatus?.done) {
-      return { currentStreak: 0, longestStreak: calculateLongestStreak(sortedStatuses) };
-    }
-    currentStreak = 1; // Start streak from yesterday
-  }
-  
-  // Check previous days
-  const today = new Date();
-  let currentDate = subDays(today, currentStreak); // Start from the day before the last counted day
-  
-  for (let i = 0; i < sortedStatuses.length; i++) {
-    const statusDate = new Date(sortedStatuses[i].date);
-    const expectedDate = format(currentDate, 'yyyy-MM-dd');
-    
-    // If this status is for the expected date and it's done
-    if (sortedStatuses[i].date === expectedDate && sortedStatuses[i].done) {
-      currentStreak++;
-      currentDate = subDays(currentDate, 1);
-    } 
-    // If this status is for the expected date but not done, break
-    else if (sortedStatuses[i].date === expectedDate && !sortedStatuses[i].done) {
-      break;
-    }
-    // If we've moved past the expected date (gap in data), break
-    else if (isAfter(statusDate, currentDate)) {
-      continue; // Skip this status and check the next one
-    } else {
-      break; // Break on any other condition (like a gap in the streak)
-    }
-  }
-  
-  const longestStreak = calculateLongestStreak(sortedStatuses);
-  return { currentStreak, longestStreak };
-};
 
-// Helper function to calculate longest streak
-const calculateLongestStreak = (sortedStatuses) => {
-  if (!sortedStatuses || !sortedStatuses.length) return 0;
-  
-  let longestStreak = 0;
-  let currentStreak = 0;
-  let lastDate = null;
-  
-  // Process statuses in chronological order for longest streak
-  const chronologicalStatuses = [...sortedStatuses].sort((a, b) => 
-    new Date(a.date) - new Date(b.date)
-  );
-  
-  for (const status of chronologicalStatuses) {
-    if (status.done) {
-      if (!lastDate || differenceInDays(new Date(status.date), new Date(lastDate)) === 1) {
-        currentStreak++;
-      } else {
-        currentStreak = 1;
-      }
-      lastDate = status.date;
-      longestStreak = Math.max(longestStreak, currentStreak);
-    } else {
-      currentStreak = 0;
-      lastDate = status.date;
-    }
-  }
-  
-  return longestStreak;
-};
 
-const calculateCompletionRate = (dailyStatus, isTodayComplete) => {
-  if (!dailyStatus || !dailyStatus.length) return 0;
-  
-  // Get statuses from the last 30 days
-  const thirtyDaysAgo = subDays(new Date(), 30);
-  const recentStatuses = dailyStatus.filter(status => 
-    new Date(status.date) >= thirtyDaysAgo
-  );
-  
-  // Count completed days
-  const completedDays = recentStatuses.filter(status => status.done).length;
-  
-  // Add today if it's complete and not already in the statuses
-  const todayString = format(new Date(), 'yyyy-MM-dd');
-  const todayInStatuses = recentStatuses.some(status => status.date === todayString);
-  
-  if (isTodayComplete && !todayInStatuses) {
-    return Math.round(((completedDays + 1) / (recentStatuses.length + 1)) * 100);
-  }
-  
-  return Math.round((completedDays / Math.max(recentStatuses.length, 1)) * 100);
-};
 
-// Calculate best performing days
-const calculateBestDays = (dailyStatuses) => {
-  if (!dailyStatuses?.length) return [];
-  
-  const dayStats = dailyStatuses.reduce((acc, status) => {
-    const day = format(new Date(status.date), 'EEEE');
-    if (!acc[day]) acc[day] = { total: 0, completed: 0 };
-    acc[day].total++;
-    if (status.done) acc[day].completed++;
-    return acc;
-  }, {});
-
-  return Object.entries(dayStats)
-    .map(([day, stats]) => ({
-      day,
-      rate: Math.round((stats.completed / stats.total) * 100)
-    }))
-    .sort((a, b) => b.rate - a.rate);
-};
-
-// Calculate monthly trend
-const calculateMonthlyTrend = (dailyStatuses) => {
-  if (!dailyStatuses?.length) return 0;
-  
-  const thisMonth = dailyStatuses.filter(status => 
-    isWithinInterval(new Date(status.date), {
-      start: startOfMonth(new Date()),
-      end: new Date()
-    })
-  );
-
-  const lastMonth = dailyStatuses.filter(status => 
-    isWithinInterval(new Date(status.date), {
-      start: startOfMonth(subMonths(new Date(), 1)),
-      end: endOfMonth(subMonths(new Date(), 1))
-    })
-  );
-
-  const thisMonthRate = calculateCompletionRate(thisMonth);
-  const lastMonthRate = calculateCompletionRate(lastMonth);
-
-  return lastMonthRate ? ((thisMonthRate - lastMonthRate) / lastMonthRate) * 100 : 0;
-};
-
-// Custom hooks
-const useWeeklyStats = (tasks) => {
-  const [weeklyProgress, setWeeklyProgress] = useState(0);
-  const [weeklyCompletions, setWeeklyCompletions] = useState(0);
-
-  useEffect(() => {
-    if (!tasks?.length) {
-      setWeeklyProgress(0);
-      setWeeklyCompletions(0);
-      return;
-    }
-
-    const now = new Date();
-    const weekStart = startOfWeek(now, { weekStartsOn: 0 });
-    const weekEnd = endOfWeek(now, { weekStartsOn: 0 });
-
-    // Calculate completions and goals per task
-    const taskStats = tasks.map(task => {
-      const weeklyCompletions = task.dailyStatuses?.filter(s => {
-        const statusDate = new Date(s.date + 'T00:00:00');
-        return s.done && isWithinInterval(statusDate, {
-          start: weekStart,
-          end: weekEnd
-        });
-      }).length || 0;
-
-      return {
-        completions: weeklyCompletions,
-        goal: task.weeklyGoal || 7
-      };
-    });
-
-    // Sum up all completions and goals
-    const totalCompletions = taskStats.reduce((acc, stat) => acc + stat.completions, 0);
-    const totalGoal = taskStats.reduce((acc, stat) => acc + stat.goal, 0);
-
-    // Calculate overall progress
-    const progress = totalGoal > 0 
-      ? Math.min(Math.round((totalCompletions / totalGoal) * 100), 100)
-      : 0;
-
-    setWeeklyCompletions(totalCompletions);
-    setWeeklyProgress(progress);
-  }, [tasks]);
-
-  return { weeklyProgress, weeklyCompletions };
-};
-
-const useCompletionHistory = (tasks) => {
-  return useMemo(() => {
-    const last7Days = [...Array(7)].map((_, i) => {
-      const date = subDays(new Date(), i);
-      const completions = tasks.reduce((acc, task) => {
-        const isDone = task.dailyStatuses?.some(s => 
-          s.done && s.date === format(date, 'yyyy-MM-dd')
-        );
-        return acc + (isDone ? 1 : 0);
-      }, 0);
-
-      return {
-        name: format(date, 'EEE'),
-        completions
-      };
-    }).reverse();
-
-    return last7Days;
-  }, [tasks]);
-};
-
-const useHabitProgress = (tasks) => {
-  return useMemo(() => {
-    return tasks.map(task => {
-      const completions = task.dailyStatuses?.filter(s => s.done).length || 0;
-      const total = task.dailyStatuses?.length || 1;
-      const streak = calculateStreak(task.dailyStatuses, task.isTodayComplete);
-
-      return {
-        id: task.id,
-        title: task.title,
-        completionRate: Math.round((completions / total) * 100),
-        streak: streak.currentStreak
-      };
-    });
-  }, [tasks]);
-};
 
 // Add new styled components
 const GlowingText = styled(Typography)(({ theme, color = '#fff' }) => ({
@@ -393,54 +175,7 @@ const StyledTextField = styled(TextField)({
 
 
 
-// Fix the calculateWeeklyCompletions function
-const calculateWeeklyCompletions = (weekStart, weekEnd, statuses, includePending = false) => {
-  // Ensure statuses is an array
-  if (!Array.isArray(statuses)) {
-    console.warn('calculateWeeklyCompletions received non-array statuses:', statuses);
-    return 0;
-  }
-  
-  // Parse dates consistently at midnight
-  const start = startOfWeek(new Date(weekStart), { weekStartsOn: 0 });
-  start.setHours(0, 0, 0, 0);
-  const end = endOfWeek(new Date(weekEnd), { weekStartsOn: 0 });
-  end.setHours(23, 59, 59, 999);
 
-  const completions = statuses.filter(status => {
-    const statusDate = new Date(status.date + 'T00:00:00');
-    const isInWeek = isWithinInterval(statusDate, { start, end });
-    return status.done && isInWeek;
-  }).length;
-
-  return completions;
-};
-
-const useOptimisticUpdate = (initialValue) => {
-  const [value, setValue] = useState(initialValue);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [error, setError] = useState(null);
-
-  const update = async (newValue, updateFn) => {
-    setIsUpdating(true);
-    setError(null);
-    // Optimistically update the UI
-    setValue(newValue);
-    
-    try {
-      await updateFn();
-    } catch (err) {
-      // Revert on error
-      setValue(initialValue);
-      setError(err.message || 'Failed to update');
-      throw err;
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  return [value, update, isUpdating, error];
-};
 
 // Update the HabitList component to be more minimalistic
 const HabitList = ({ habits, onComplete, onEdit, onDelete, onNavigate, dailyStatus, onViewPartnerHabits }) => {
