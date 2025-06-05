@@ -321,7 +321,7 @@ export default function HomePage() {
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
           });
-          console.log('User document initialized');
+  
         }
       } catch (error) {
         console.error('Error initializing user data:', error);

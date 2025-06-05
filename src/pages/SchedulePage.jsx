@@ -378,7 +378,7 @@ const EnhancedCalendarView = ({ events = [], isPartner = false, title, onEventCl
   
   // Debug log to check events
   useEffect(() => {
-    console.log(`${title} events:`, events);
+
   }, [events, title]);
   
   // Convert events to the format expected by react-big-calendar
@@ -419,7 +419,7 @@ const EnhancedCalendarView = ({ events = [], isPartner = false, title, onEventCl
   
   // Debug log to check sanitized events
   useEffect(() => {
-    console.log(`${title} sanitized events:`, sanitizedEvents);
+    
   }, [sanitizedEvents, title]);
   
   if (isMobile) {
@@ -484,19 +484,7 @@ const EnhancedCalendarView = ({ events = [], isPartner = false, title, onEventCl
 
 // Add this debugging function to your SchedulePage component
 const debugEvent = (event) => {
-  console.log('Event details:', {
-    id: event.id,
-    title: event.title,
-    start: event.start instanceof Date ? event.start.toISOString() : event.start,
-    end: event.end instanceof Date ? event.end.toISOString() : event.end,
-    allDay: event.allDay,
-    // Add any other properties you want to debug
-  });
-  
-  // Check if the event dates are valid
-  if (event.start instanceof Date && event.end instanceof Date) {
-    console.log('Event duration in hours:', (event.end - event.start) / (1000 * 60 * 60));
-  }
+  // Event validation and processing
   
   return event;
 };
@@ -748,7 +736,7 @@ const SchedulePage = () => {
         ...doc.data()
       }));
       
-      console.log("Fetched events:", fetchedEvents);
+
       
       // Process events to ensure they have valid dates
       const processedEvents = fetchedEvents.map(event => {
@@ -1024,7 +1012,7 @@ const SchedulePage = () => {
       setLoading(true);
       setIsDrawerOpen(false);
       
-      console.log("Extracted events:", extractedEvents); // Debug log
+
       
       if (!extractedEvents || !Array.isArray(extractedEvents) || extractedEvents.length === 0) {
         setError("No events were extracted. Please try again with a different text.");
@@ -1074,7 +1062,7 @@ const SchedulePage = () => {
         };
       });
       
-      console.log("Formatted events:", formattedEvents); // Debug log
+
       
       // Add events to Firestore - FIX: Use the correct collection path
       const batch = writeBatch(db);

@@ -104,11 +104,7 @@ export default function CalendarCallbackPage() {
           grant_type: 'authorization_code'
         };
 
-        // Log the request for debugging (without client secret)
-        console.log('Token request:', {
-          ...tokenRequestData,
-          client_secret: '[REDACTED]'
-        });
+
         
         // Exchange code for tokens
         const tokenResponse = await axios({
@@ -121,7 +117,7 @@ export default function CalendarCallbackPage() {
           data: new URLSearchParams(tokenRequestData).toString()
         });
 
-        console.log('Token response received');
+
 
         // Store tokens securely
         const tokens = {

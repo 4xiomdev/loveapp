@@ -238,7 +238,7 @@ export default function RemindersPage() {
       setError(null);
       const result = await cleanupFirestoreData();
       if (result.success) {
-        console.log("Cleanup successful");
+
       } else {
         setError(result.error);
       }

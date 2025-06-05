@@ -108,11 +108,8 @@ export function AuthProvider({ children }) {
 
               // Setup partner watcher only if partner ID changed
               if (data.partnerId && (!partnerData || partnerData.uid !== data.partnerId)) {
-                console.log('Setting up partner document listener for:', data.partnerId);
-                
                 // Cleanup existing partner listener if exists
                 if (unsubPartner) {
-                  console.log('Cleaning up previous partner listener');
                   unsubPartner();
                   unsubPartner = null;
                 }
@@ -127,11 +124,7 @@ export function AuthProvider({ children }) {
                         ...partnerDoc.data(),
                         uid: data.partnerId
                       };
-                      console.log('Partner document updated:', {
-                        partnerId: data.partnerId,
-                        hasData: true,
-                        mode: 'PARTNER'
-                      });
+
                       setPartnerData(partnerData);
                     } else {
                       console.warn('Partner document does not exist');
@@ -147,10 +140,8 @@ export function AuthProvider({ children }) {
                 );
               } else if (!data.partnerId && partnerData) {
                 // Clear partner data if no partner ID
-                console.log('Clearing partner data');
                 setPartnerData(null);
                 if (unsubPartner) {
-                  console.log('Cleaning up partner listener');
                   unsubPartner();
                   unsubPartner = null;
                 }
@@ -186,7 +177,6 @@ export function AuthProvider({ children }) {
 
     // Cleanup function
     return () => {
-      console.log('Cleaning up watchers');
       isMounted = false;
       if (unsubUser) unsubUser();
       if (unsubPartner) unsubPartner();
@@ -241,7 +231,7 @@ export function AuthProvider({ children }) {
 
     try {
       await linkPartnerByEmail(db, user.uid, partnerEmail);
-      console.log('Successfully linked with partner:', partnerEmail);
+
       return true;
     } catch (error) {
       console.error('Error linking partner:', error);
@@ -256,7 +246,7 @@ export function AuthProvider({ children }) {
 
     try {
       await unlinkPartnerHelper(db, user, userData);
-      console.log('Successfully unlinked from partner');
+
       return true;
     } catch (error) {
       console.error('Error unlinking partner:', error);
@@ -275,7 +265,7 @@ export function AuthProvider({ children }) {
         stars: (partnerData?.stars || 0) + starAmount,
         updatedAt: serverTimestamp()
       });
-      console.log('Successfully awarded stars to partner:', starAmount);
+
       return true;
     } catch (error) {
       console.error('Error awarding stars:', error);
@@ -298,7 +288,7 @@ export function AuthProvider({ children }) {
         settings: { ...userData.settings, ...newSettings },
         updatedAt: serverTimestamp()
       });
-      console.log('Successfully updated user settings');
+
       return true;
     } catch (error) {
       console.error('Error updating settings:', error);
@@ -359,10 +349,10 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        console.log('Auth state changed:', user.uid);
+
         setUser(user);
       } else {
-        console.log('User signed out');
+
         // Clear Google Calendar token on logout
         localStorage.removeItem('google_calendar_data');
         setUser(null);

@@ -829,24 +829,10 @@ export default function AccountabilityDetailPage() {
     const weekStart = startOfWeek(now, { weekStartsOn: 0 }); // Start week on Sunday
     const weekEnd = endOfWeek(now, { weekStartsOn: 0 });
     
-    // Log dates for debugging
-    console.log('Week interval:', {
-      start: format(weekStart, 'yyyy-MM-dd HH:mm:ss'),
-      end: format(weekEnd, 'yyyy-MM-dd HH:mm:ss')
-    });
-    
     const currentWeekCompletions = dailyStatus.filter(status => {
       // Parse the date at midnight to avoid timezone issues
       const statusDate = new Date(status.date + 'T00:00:00');
       const isInWeek = isWithinInterval(statusDate, { start: weekStart, end: weekEnd });
-      
-      // Log for debugging
-      console.log('Status check:', {
-        date: status.date,
-        parsedDate: format(statusDate, 'yyyy-MM-dd HH:mm:ss'),
-        done: status.done,
-        isInWeek
-      });
       
       return status.done && isInWeek;
     }).length;

@@ -253,16 +253,9 @@ export default function AccountabilityListPage() {
   useEffect(() => {
     if (!user?.uid) return;
     
-    console.log('Setting up star balance listener for user:', user.uid);
-    
     const unsubStars = onSnapshot(doc(db, "users", user.uid), (doc) => {
       if (doc.exists()) {
         const newStars = doc.data().stars || 0;
-        console.log('Star balance updated:', { 
-          oldStars: myStars, 
-          newStars,
-          change: newStars - myStars 
-        });
         setMyStars(newStars);
       }
     });
