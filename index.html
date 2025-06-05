@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/heart.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>L&J App 💞</title>
+    <base href="/" />
+    <div id="root"></div>
+
+    <!-- 1) Quicksand (light 300) from Google Fonts -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap"
+    />
+
+    <!-- 2) Your global styling (optional). Tweak colors or remove if you prefer. -->
+    <style>
+      :root {
+        /* Use Quicksand light (300) as default. 
+           You can override in your React app for heavier weights if needed. */
+        font-family: 'Quicksand', system-ui, Avenir, Helvetica, Arial, sans-serif;
+        line-height: 1.5;
+        font-weight: 300; /* Light weight by default */
+
+        color: rgba(255, 255, 255, 0.87);
+        background-color: #242424;
+
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        margin: 0; /* Remove default body margin */
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      /* Basic link styling. Feel free to adjust or remove. */
+      a {
+        color: #646cff;
+        text-decoration: none;
+        transition: color 0.3s;
+      }
+      a:hover {
+        color: #535bf2;
+      }
+
+      /* Basic button styling for non-MUI buttons, if ever used. */
+      button {
+        font-family: inherit;
+        font-size: 1em;
+        font-weight: 300;
+        border-radius: 8px;
+        padding: 0.6em 1.2em;
+        cursor: pointer;
+        transition: background-color 0.25s, border-color 0.25s;
+        border: 1px solid transparent;
+        background-color: #1a1a1a;
+        color: #fff;
+      }
+      button:hover {
+        border-color: #646cff;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- 3) Vite React mount point -->
+    <div id="root"></div>
+
+    <!-- 4) Vite will load your React code from main.jsx here -->
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

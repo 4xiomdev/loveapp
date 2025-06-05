@@ -1,0 +1,452 @@
+/* Custom styles for React Big Calendar */
+.rbc-calendar {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 8px;
+  font-family: inherit;
+  color: white;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.rbc-toolbar {
+  margin-bottom: 20px;
+}
+
+.rbc-toolbar button {
+  color: #fff;
+  background-color: rgba(155, 89, 182, 0.2);
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  transition: all 0.2s ease;
+}
+
+.rbc-toolbar button:hover {
+  background-color: rgba(155, 89, 182, 0.3);
+}
+
+.rbc-toolbar button.rbc-active {
+  background-color: rgba(155, 89, 182, 0.4);
+  box-shadow: 0 2px 8px rgba(155, 89, 182, 0.3);
+}
+
+.rbc-header {
+  padding: 10px 3px;
+  background-color: rgba(155, 89, 182, 0.3);
+  border-radius: 4px;
+  font-weight: 600;
+  border: none !important;
+}
+
+.rbc-date-cell {
+  padding: 5px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.rbc-off-range-bg {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.rbc-today {
+  background-color: rgba(155, 89, 182, 0.2) !important;
+}
+
+.rbc-day-bg {
+  transition: all 0.2s ease;
+}
+
+.rbc-day-bg:hover {
+  background-color: rgba(155, 89, 182, 0.1);
+}
+
+.rbc-event {
+  border-radius: 4px;
+  padding: 2px 5px;
+  background-color: rgba(155, 89, 182, 0.8);
+  border: none;
+  color: white;
+  font-size: 0.85em;
+  transition: all 0.2s ease;
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+.rbc-event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.rbc-time-view, 
+.rbc-agenda-view,
+.rbc-month-view {
+  background-color: rgba(18, 18, 18, 0.2);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.rbc-timeslot-group {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rbc-time-content {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rbc-time-header-content {
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rbc-day-slot .rbc-time-slot {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.rbc-time-header-gutter {
+  background-color: rgba(18, 18, 18, 0.3);
+}
+
+.rbc-month-row + .rbc-month-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rbc-day-bg + .rbc-day-bg {
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rbc-time-column {
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rbc-agenda-table {
+  display: table !important;
+  width: 100% !important;
+  color: white !important;
+}
+
+.rbc-agenda-table th {
+  color: white !important;
+  background-color: rgba(155, 89, 182, 0.3) !important;
+  padding: 8px !important;
+}
+
+.rbc-agenda-table td {
+  color: white !important;
+  padding: 8px !important;
+}
+
+.rbc-agenda-table td + td {
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rbc-agenda-time-cell {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.rbc-agenda-event-cell {
+  font-weight: 500;
+}
+
+/* Make sure the time indicators in week/day view are visible */
+.rbc-time-gutter .rbc-label {
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+/* Improve month view appearance */
+.rbc-month-view {
+  flex: 1 0 0 !important;
+  min-height: 300px !important;
+  height: auto !important;
+  overflow: visible !important;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.rbc-month-view .rbc-row-content {
+  z-index: 1; /* Ensure events are visible */
+}
+
+.rbc-month-view .rbc-event {
+  position: absolute !important;
+  z-index: 999 !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  background-color: #9b59b6 !important;
+  color: white !important;
+  border-radius: 4px !important;
+  padding: 2px 5px !important;
+  margin: 1px !important;
+  font-weight: bold !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+  min-height: 20px !important;
+  overflow: hidden !important;
+}
+
+.rbc-month-view .rbc-event.rbc-selected {
+  background-color: rgba(155, 89, 182, 1);
+  box-shadow: 0 0 0 2px #fff;
+}
+
+/* Partner events in month view */
+.rbc-month-view .rbc-event[style*="#e74c3c"] {
+  background-color: rgba(231, 76, 60, 0.8) !important;
+}
+
+/* Make sure month view shows events */
+.rbc-row-content {
+  z-index: 4 !important;
+}
+
+.rbc-row-segment {
+  padding: 0 1px;
+}
+
+/* Improve agenda view appearance */
+.rbc-agenda-view {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 300px !important;
+  height: auto !important;
+  background-color: rgba(30, 30, 30, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.rbc-agenda-empty {
+  padding: 20px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
+}
+
+/* Improve iPad/tablet specific styling */
+@media (min-width: 600px) and (max-width: 960px) {
+  .rbc-toolbar {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .rbc-toolbar-label {
+    width: 100%;
+    text-align: center;
+    margin: 8px 0;
+  }
+  
+  .rbc-month-view .rbc-header {
+    padding: 8px 4px;
+  }
+  
+  .rbc-month-view .rbc-date-cell {
+    padding: 4px;
+  }
+  
+  .rbc-month-view .rbc-event {
+    padding: 3px 4px;
+  }
+}
+
+/* Fix empty calendar appearance */
+.rbc-month-row {
+  min-height: 120px !important;
+  overflow: visible !important;
+}
+
+.rbc-date-cell {
+  text-align: center;
+  padding: 5px;
+  font-weight: 500;
+}
+
+/* Make "no events" more visible */
+.rbc-agenda-empty,
+.rbc-agenda-content:empty::before {
+  content: "No events scheduled";
+  display: block;
+  padding: 20px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Improve agenda view */
+.rbc-agenda-view table.rbc-agenda-table {
+  display: table !important;
+  width: 100% !important;
+  color: white !important;
+}
+
+.rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+  color: white !important;
+  padding: 8px !important;
+}
+
+.rbc-agenda-view table.rbc-agenda-table .rbc-agenda-time-cell {
+  padding: 8px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.rbc-agenda-view table.rbc-agenda-table .rbc-agenda-event-cell {
+  padding: 8px;
+  color: white;
+}
+
+/* Force proper rendering of all calendar views */
+.rbc-calendar > div {
+  flex: 1 !important;
+  min-height: 0 !important;
+}
+
+/* Additional fixes for month view */
+.rbc-month-view .rbc-events-container {
+  position: relative !important;
+  z-index: 100 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.rbc-month-view .rbc-row-content {
+  z-index: 80 !important;
+  position: relative !important;
+}
+
+.rbc-month-view .rbc-background-event {
+  z-index: 1 !important;
+}
+
+.rbc-event {
+  z-index: 10 !important;
+}
+
+/* Fix for agenda view */
+.rbc-agenda-content {
+  color: white !important;
+}
+
+.rbc-agenda-view table {
+  color: white !important;
+}
+
+.rbc-agenda-view table th,
+.rbc-agenda-view table td {
+  color: white !important;
+}
+
+.rbc-agenda-view table tr:hover {
+  background-color: rgba(155, 89, 182, 0.1) !important;
+}
+
+/* Make agenda view events more visible */
+.rbc-agenda-event-cell {
+  font-weight: bold !important;
+}
+
+/* Fix for month view cells */
+.rbc-month-view .rbc-date-cell {
+  z-index: 1 !important;
+}
+
+/* Critical fixes for month view events */
+.rbc-month-view .rbc-event {
+  position: absolute !important;
+  z-index: 999 !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  background-color: #9b59b6 !important;
+  color: white !important;
+  border-radius: 4px !important;
+  padding: 2px 5px !important;
+  margin: 1px !important;
+  font-weight: bold !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+  min-height: 20px !important;
+  overflow: hidden !important;
+}
+
+/* Fix the event container in month view */
+.rbc-month-view .rbc-events-container {
+  position: relative !important;
+  z-index: 100 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Fix the row content to ensure events are visible */
+.rbc-month-view .rbc-row-content {
+  z-index: 80 !important;
+  position: relative !important;
+}
+
+/* Ensure month view cells don't overlap events */
+.rbc-month-view .rbc-date-cell {
+  z-index: 1 !important;
+}
+
+/* Fix agenda view text color */
+.rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+  color: white !important;
+  padding: 8px !important;
+}
+
+.rbc-agenda-view table.rbc-agenda-table thead > tr > th {
+  color: white !important;
+  background-color: rgba(155, 89, 182, 0.3) !important;
+}
+
+/* Force month view events to be visible */
+.rbc-month-view .rbc-event-content {
+  display: block !important;
+  visibility: visible !important;
+  position: relative !important;
+  z-index: 1000 !important;
+  color: white !important;
+  font-weight: bold !important;
+  padding: 2px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Make sure the event container is visible */
+.rbc-month-view .rbc-row-segment {
+  position: relative !important;
+  z-index: 100 !important;
+}
+
+/* Ensure the events container is visible */
+.rbc-month-view .rbc-events-container {
+  position: absolute !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 100 !important;
+}
+
+/* Make sure the month view has enough height for events */
+.rbc-month-view .rbc-month-row {
+  min-height: 100px !important;
+  overflow: visible !important;
+}
+
+/* Ensure event content is visible */
+.rbc-event-content {
+  color: white !important;
+  font-weight: bold !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Fix for week/day view events - position relative for these views */
+.rbc-time-view .rbc-event {
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+/* Make month cells taller */
+.rbc-month-view .rbc-month-row {
+  min-height: 100px !important;
+} 
