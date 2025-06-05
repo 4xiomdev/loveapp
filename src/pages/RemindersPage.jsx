@@ -50,161 +50,20 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, isToday, isTomorrow, isThisWeek, isThisMonth, parseISO } from 'date-fns';
-import styled from "@emotion/styled";
 import NoPartnerState from '../components/NoPartnerState';
 import SoloModeState from '../components/SoloModeState';
 import { cleanupFirestoreData } from "../utils/cleanupFirestore";
 import { USER_MODES } from "../config/userConfig";
 import AddIcon from "@mui/icons-material/Add";
+import ReminderItem from '../components/reminders/ReminderItem';
+import { GlowingText } from '../components/reminders/StyledComponents';
+import { REMINDER_CATEGORIES, VIEW_MODES } from '../constants/reminderConstants';
+import { filterReminders, canModifyReminder, groupRemindersByDate } from '../utils/reminderHelpers';
+import { useReminderActions } from '../hooks/useReminderActions';
 
-const GlowingText = styled(Typography)(({ theme, color = '#fff' }) => ({
-  fontWeight: 800,
-  color: color,
-  textShadow: `0 0 20px ${alpha(color, 0.5)}`,
-  transition: 'all 0.3s ease',
-}));
 
-const ReminderCard = styled(Paper)(({ theme, completed, isPartnerView }) => ({
-  padding: '12px',
-  marginBottom: '12px',
-  backgroundColor: alpha('#fff', 0.03),
-  backdropFilter: 'blur(10px)',
-  borderRadius: '16px',
-  transition: 'all 0.3s ease',
-  border: `1px solid ${alpha('#fff', completed === 'true' ? 0.1 : 0.2)}`,
-  '&:hover': {
-    backgroundColor: alpha('#fff', 0.06),
-    transform: 'translateY(-2px)',
-    boxShadow: `0 8px 24px ${alpha('#000', 0.2)}`
-  }
-}));
 
-const REMINDER_CATEGORIES = [
-  { value: 'personal', label: 'Personal', icon: '👤' },
-  { value: 'work', label: 'Work', icon: '💼' },
-  { value: 'health', label: 'Health', icon: '🏥' },
-  { value: 'shopping', label: 'Shopping', icon: '🛍️' },
-  { value: 'social', label: 'Social', icon: '🤝' },
-  { value: 'other', label: 'Other', icon: '📝' }
-];
 
-// Update the view mode options
-const VIEW_MODES = {
-  MY_REMINDERS: 'my_todos',
-  PARTNER_REMINDERS: 'partner_todos'
-};
-
-function ReminderItem({ reminder, onToggle, onEdit, onDelete, currentUserId }) {
-  const canModify = reminder.owner === currentUserId;
-  const isPartnerView = reminder.owner !== currentUserId;
-  
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.2 }}
-    >
-      <ReminderCard 
-        completed={reminder.completed ? 'true' : 'false'}
-        data-partner-view={isPartnerView}
-        sx={{
-          bgcolor: alpha('#fff', 0.03),
-          borderColor: alpha('#fff', reminder.completed ? 0.1 : 0.2)
-        }}
-      >
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, flex: 1 }}>
-            <IconButton 
-              onClick={() => onToggle(reminder)}
-              disabled={!canModify}
-              sx={{ 
-                color: reminder.completed ? '#4caf50' : alpha('#fff', 0.7),
-                '&:hover': {
-                  color: canModify ? (reminder.completed ? '#66bb6a' : '#fff') : undefined
-                },
-                opacity: canModify ? 1 : 0.5
-              }}
-            >
-              {reminder.completed ? <CheckCircleIcon /> : <RadioButtonUncheckedIcon />}
-            </IconButton>
-            <Box>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  textDecoration: reminder.completed ? 'line-through' : 'none',
-                  color: reminder.completed ? alpha('#fff', 0.5) : '#fff'
-                }}
-              >
-                {reminder.title}
-              </Typography>
-              {reminder.description && (
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
-                    mt: 1,
-                    color: alpha('#fff', 0.7),
-                    textDecoration: reminder.completed ? 'line-through' : 'none'
-                  }}
-                >
-                  {reminder.description}
-                </Typography>
-              )}
-              <Box sx={{ mt: 2, display: 'flex', gap: 1, alignItems: 'center' }}>
-                <Chip 
-                  label={format(parseISO(reminder.date), 'MMM d, yyyy')}
-                  size="small"
-                  sx={{ 
-                    bgcolor: alpha('#fff', 0.1),
-                    color: '#fff',
-                    '& .MuiChip-label': {
-                      px: 2
-                    }
-                  }}
-                />
-                {reminder.category && (
-                  <Chip 
-                    label={REMINDER_CATEGORIES.find(c => c.value === reminder.category)?.label || reminder.category}
-                    size="small"
-                    sx={{ 
-                      bgcolor: alpha('#fff', 0.1),
-                      color: '#fff',
-                      '& .MuiChip-label': {
-                        px: 2
-                      }
-                    }}
-                  />
-                )}
-              </Box>
-            </Box>
-          </Box>
-          {canModify && (
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <IconButton 
-                onClick={() => onEdit(reminder)}
-                sx={{ 
-                  color: alpha('#fff', 0.7),
-                  '&:hover': { color: '#fff' }
-                }}
-              >
-                <EditIcon />
-              </IconButton>
-              <IconButton 
-                onClick={() => onDelete(reminder.id)}
-                sx={{ 
-                  color: alpha('#fff', 0.7),
-                  '&:hover': { color: '#f44336' }
-                }}
-              >
-                <DeleteIcon />
-              </IconButton>
-            </Box>
-          )}
-        </Box>
-      </ReminderCard>
-    </motion.div>
-  );
-}
 
 export default function RemindersPage() {
   const { user, userData } = useAuth();
@@ -225,6 +84,14 @@ export default function RemindersPage() {
 
   // Add admin check
   const isAdmin = user?.uid === "XGOegzsmohXhZtJT9ZE2uxaw4J83" || (user?.customClaims?.admin === true);
+
+  // Use the extracted actions hook
+  const {
+    handleCreateReminder: createReminder,
+    handleUpdateReminder: updateReminder,
+    handleDeleteReminder,
+    handleToggleComplete
+  } = useReminderActions(user, userData, setError);
 
   // Force /login if not authenticated
   useEffect(() => {
@@ -323,125 +190,47 @@ export default function RemindersPage() {
     };
   }, [user?.uid, userData?.partnerId]);
 
-  const handleCreateReminder = async (e) => {
+  // Wrapper functions to handle form logic
+  const handleCreateReminderSubmit = async (e) => {
     e.preventDefault();
-    if (!user?.uid || !newTitle.trim()) return;
+    if (!newTitle.trim()) return;
 
-    try {
-      const remindersRef = collection(db, 'reminders');
-      await addDoc(remindersRef, {
-        title: newTitle.trim(),
-        description: newDescription.trim(),
-        category: newCategory,
-        date: newDate.toISOString(),
-        owner: user.uid,
-        participants: [user.uid, userData?.partnerId].filter(Boolean),
-        completed: false,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
+    const formData = {
+      title: newTitle,
+      description: newDescription,
+      category: newCategory,
+      date: newDate
+    };
 
+    const success = await createReminder(e, formData);
+    if (success) {
       setNewTitle("");
       setNewDescription("");
       setNewCategory("personal");
       setNewDate(new Date());
       setOpenCreate(false);
-    } catch (error) {
-      console.error("Error creating reminder:", error);
-      setError("Failed to create reminder");
     }
   };
 
-  const handleUpdateReminder = async (e) => {
+  const handleUpdateReminderSubmit = async (e) => {
     e.preventDefault();
-    if (!user?.uid || !editingReminder || !newTitle.trim()) return;
+    if (!newTitle.trim()) return;
 
-    try {
-      const reminderRef = doc(db, 'reminders', editingReminder.id);
-      await updateDoc(reminderRef, {
-        title: newTitle.trim(),
-        description: newDescription.trim(),
-        category: newCategory,
-        date: newDate.toISOString(),
-        updatedAt: serverTimestamp()
-      });
+    const formData = {
+      title: newTitle,
+      description: newDescription,
+      category: newCategory,
+      date: newDate
+    };
 
+    const success = await updateReminder(e, editingReminder, formData);
+    if (success) {
       setEditingReminder(null);
       setNewTitle("");
       setNewDescription("");
       setNewCategory("personal");
       setNewDate(new Date());
-    } catch (error) {
-      console.error("Error updating reminder:", error);
-      setError("Failed to update reminder");
     }
-  };
-
-  const handleDeleteReminder = async (reminderId) => {
-    if (!user?.uid) return;
-
-    try {
-      const reminderRef = doc(db, 'reminders', reminderId);
-      await deleteDoc(reminderRef);
-    } catch (error) {
-      console.error("Error deleting reminder:", error);
-      setError("Failed to delete reminder");
-    }
-  };
-
-  const handleToggleComplete = async (reminder) => {
-    if (!user?.uid || !reminder) return;
-
-    try {
-      const reminderRef = doc(db, 'reminders', reminder.id);
-      await updateDoc(reminderRef, {
-        completed: !reminder.completed,
-        updatedAt: serverTimestamp()
-      });
-    } catch (error) {
-      console.error("Error toggling reminder:", error);
-      setError("Failed to toggle reminder");
-    }
-  };
-
-  const filterReminders = (reminders) => {
-    if (!reminders) return [];
-    
-    if (viewMode === VIEW_MODES.MY_REMINDERS) {
-      return reminders;
-    } else if (viewMode === VIEW_MODES.PARTNER_REMINDERS) {
-      return partnerReminders;
-    }
-    return [];
-  };
-
-  const canModifyReminder = (reminder) => {
-    return reminder.owner === user?.uid;
-  };
-
-  const groupRemindersByDate = (reminders) => {
-    const today = [];
-    const tomorrow = [];
-    const thisWeek = [];
-    const thisMonth = [];
-    const later = [];
-
-    reminders.forEach(reminder => {
-      const date = parseISO(reminder.date);
-      if (isToday(date)) {
-        today.push(reminder);
-      } else if (isTomorrow(date)) {
-        tomorrow.push(reminder);
-      } else if (isThisWeek(date)) {
-        thisWeek.push(reminder);
-      } else if (isThisMonth(date)) {
-        thisMonth.push(reminder);
-      } else {
-        later.push(reminder);
-      }
-    });
-
-    return { today, tomorrow, thisWeek, thisMonth, later };
   };
 
   const handleCleanup = async () => {
@@ -668,7 +457,7 @@ export default function RemindersPage() {
             }}
           >
             <DialogTitle>Create New Task</DialogTitle>
-            <form onSubmit={handleCreateReminder}>
+            <form onSubmit={handleCreateReminderSubmit}>
               <DialogContent>
                 <TextField
                   autoFocus
@@ -855,7 +644,7 @@ export default function RemindersPage() {
             }}
           >
             <DialogTitle>Edit Task</DialogTitle>
-            <form onSubmit={handleUpdateReminder}>
+            <form onSubmit={handleUpdateReminderSubmit}>
               <DialogContent>
                 <TextField
                   autoFocus
@@ -1271,7 +1060,7 @@ export default function RemindersPage() {
           }}
         >
           <DialogTitle>Create New Task</DialogTitle>
-          <form onSubmit={handleCreateReminder}>
+                        <form onSubmit={handleCreateReminderSubmit}>
             <DialogContent>
               <TextField
                 autoFocus
@@ -1458,7 +1247,7 @@ export default function RemindersPage() {
           }}
         >
           <DialogTitle>Edit Task</DialogTitle>
-          <form onSubmit={handleUpdateReminder}>
+                        <form onSubmit={handleUpdateReminderSubmit}>
             <DialogContent>
               <TextField
                 autoFocus
