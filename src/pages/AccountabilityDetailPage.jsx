@@ -1,5 +1,5 @@
 // src/pages/AccountabilityDetailPage.jsx
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { db } from "../firebase";
@@ -41,6 +41,8 @@ import {
 } from "@mui/material";
 import {
   LocalFireDepartment as LocalFireDepartmentIcon,
+  TrendingUp as TrendingUpIcon,
+  EmojiEvents as EmojiEventsIcon,
   CalendarToday as CalendarTodayIcon,
   ArrowBack as ArrowBackIcon,
   ChevronLeft as ChevronLeftIcon,
