@@ -1,30 +1,31 @@
 // src/App.jsx
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import LoginPage from './pages/LoginPage';
-import HomePage from './pages/HomePage';
-import MessagesPage from './pages/MessagesPage';
-import StarsPage from './pages/StarsPage';
-import CouponsPage from './pages/CouponsPage';
-import RemindersPage from './pages/RemindersPage';
-import AccountabilityListPage from './pages/AccountabilityListPage';
-import AccountabilityDetailPage from './pages/AccountabilityDetailPage';
-import PartnerLinkPage from './pages/PartnerLinkPage';
-import AdminDashboardPage from './pages/AdminDashboardPage';
 
-import FirestoreManagerPage from './pages/FirestoreManagerPage';
+const LoginPage = React.lazy(() => import('./pages/LoginPage'));
+const HomePage = React.lazy(() => import('./pages/HomePage'));
+const MessagesPage = React.lazy(() => import('./pages/MessagesPage'));
+const StarsPage = React.lazy(() => import('./pages/StarsPage'));
+const CouponsPage = React.lazy(() => import('./pages/CouponsPage'));
+const RemindersPage = React.lazy(() => import('./pages/RemindersPage'));
+const AccountabilityListPage = React.lazy(() => import('./pages/AccountabilityListPage'));
+const AccountabilityDetailPage = React.lazy(() => import('./pages/AccountabilityDetailPage'));
+const PartnerLinkPage = React.lazy(() => import('./pages/PartnerLinkPage'));
+const AdminDashboardPage = React.lazy(() => import('./pages/AdminDashboardPage'));
+
+const FirestoreManagerPage = React.lazy(() => import('./pages/FirestoreManagerPage'));
 import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './components/DashboardLayout';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import SchedulePage from './pages/SchedulePage';
-import MoodTrackerPage from './pages/MoodTrackerPage';
+const SchedulePage = React.lazy(() => import('./pages/SchedulePage'));
+const MoodTrackerPage = React.lazy(() => import('./pages/MoodTrackerPage'));
 import ErrorBoundary from './components/ErrorBoundary';
-import CalendarCallbackPage from './pages/CalendarCallbackPage';
-import ValentineProposalPage from './pages/ValentineProposalPage';
-import SettingsPage from './pages/SettingsPage';
+const CalendarCallbackPage = React.lazy(() => import('./pages/CalendarCallbackPage'));
+const ValentineProposalPage = React.lazy(() => import('./pages/ValentineProposalPage'));
+const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
 
 // Add this at the top of your file
 const MAINTENANCE_MODE = false; // Set to false to restore the site
@@ -65,7 +66,8 @@ function App() {
       <ErrorBoundary>
         <AuthProvider>
           <ThemeProvider>
-            <Routes>
+            <Suspense fallback={<div>Loading...</div>}>
+              <Routes>
               {/* Root path checks auth status */}
               <Route path="/" element={<RootRoute />} />
               
@@ -99,6 +101,7 @@ function App() {
               {/* Catch-all route also checks auth status */}
               <Route path="*" element={<RootRoute />} />
             </Routes>
+            </Suspense>
           </ThemeProvider>
         </AuthProvider>
       </ErrorBoundary>

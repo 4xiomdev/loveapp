@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { 
   Box, 
   Typography, 
@@ -10,13 +10,14 @@ import {
   Collapse,
   Fade
 } from '@mui/material';
-import { 
+import {
   Check as CheckIcon,
   Star as StarIcon
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import Confetti from 'react-confetti';
+import PropTypes from 'prop-types';
 
 const EnhancedHabitCard = ({ 
   habit, 
@@ -291,4 +292,18 @@ const EnhancedHabitCard = ({
   );
 };
 
-export default EnhancedHabitCard; 
+export default EnhancedHabitCard;
+
+EnhancedHabitCard.propTypes = {
+  habit: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    isTodayComplete: PropTypes.bool,
+    title: PropTypes.string.isRequired,
+    updatedAt: PropTypes.any
+  }).isRequired,
+  onComplete: PropTypes.func.isRequired,
+  weeklyCompletions: PropTypes.number.isRequired,
+  weeklyGoal: PropTypes.number.isRequired,
+  showStarEarned: PropTypes.bool,
+  color: PropTypes.string
+};
