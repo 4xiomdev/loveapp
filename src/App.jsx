@@ -14,7 +14,7 @@ import AccountabilityListPage from './pages/AccountabilityListPage';
 import AccountabilityDetailPage from './pages/AccountabilityDetailPage';
 import PartnerLinkPage from './pages/PartnerLinkPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
-import AdminDebugPage from './pages/AdminDebugPage';
+
 import FirestoreManagerPage from './pages/FirestoreManagerPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './components/DashboardLayout';
@@ -90,7 +90,6 @@ function App() {
                   <Route path="admin" element={<ProtectedRoute requireAdmin={true} />}>
                     <Route index element={<AdminDashboardPage />} />
                     <Route path="firestore" element={<FirestoreManagerPage />} />
-                    <Route path="debug" element={<AdminDebugPage />} />
                   </Route>
                   <Route path="schedule" element={<SchedulePage />} />
                   <Route path="mood" element={<MoodTrackerPage />} />
