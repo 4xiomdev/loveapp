@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogContentText,
   DialogActions,
   Button,
   TextField,
@@ -17,6 +16,7 @@ import {
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
+import PropTypes from 'prop-types';
 import { 
   doc, 
   writeBatch, 
@@ -108,8 +108,8 @@ export default function DeleteAccountDialog({ open, onClose }) {
   };
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={handleClose}
       maxWidth="sm"
       fullWidth
@@ -174,4 +174,9 @@ export default function DeleteAccountDialog({ open, onClose }) {
       </DialogActions>
     </Dialog>
   );
-} 
+}
+
+DeleteAccountDialog.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired
+};
