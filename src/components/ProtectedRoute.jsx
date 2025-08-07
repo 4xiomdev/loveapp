@@ -14,7 +14,16 @@ import { Box, CircularProgress, Typography } from "@mui/material";
  * - Otherwise, render <Outlet /> for the protected content.
  */
 export default function ProtectedRoute({ requireAdmin = false }) {
-  const { user, loading, isAdmin } = useAuth();
+  const auth = useAuth();
+  // Gracefully handle edge cases during HMR where context may be temporarily undefined
+  if (!auth) {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+  const { user, loading, isAdmin } = auth;
   const location = useLocation();
 
   if (loading) {

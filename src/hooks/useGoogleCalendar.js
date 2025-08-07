@@ -8,25 +8,48 @@ export const useGoogleCalendar = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const checkTokenExpiry = useCallback(() => {
+  const readToken = useCallback(() => {
+    // New format
+    const data = localStorage.getItem('google_calendar_data');
+    if (data) {
+      try {
+        const { token, expiry } = JSON.parse(data);
+        return { token, expiry };
+      } catch {}
+    }
+    // Back-compat
     const token = localStorage.getItem('google_token');
     const expiry = localStorage.getItem('google_token_expiry');
-    
-    if (!token || !expiry) {
-      return false;
-    }
+    if (token && expiry) return { token, expiry: parseInt(expiry) };
+    return { token: null, expiry: 0 };
+  }, []);
 
-    const now = new Date().getTime();
-    const expiryTime = parseInt(expiry);
-    
-    return now < expiryTime;
+  const writeToken = useCallback((token, expiryMs) => {
+    const payload = { token, expiry: expiryMs };
+    localStorage.setItem('google_calendar_data', JSON.stringify(payload));
+    // Back-compat
+    localStorage.setItem('google_token', token);
+    localStorage.setItem('google_token_expiry', `${expiryMs}`);
   }, []);
 
   const clearTokens = useCallback(() => {
+    localStorage.removeItem('google_calendar_data');
     localStorage.removeItem('google_token');
     localStorage.removeItem('google_token_expiry');
     setIsAuthenticated(false);
   }, []);
+
+  const checkTokenExpiry = useCallback(() => {
+    const { token, expiry } = readToken();
+    if (!token || !expiry) return false;
+    return Date.now() < Number(expiry);
+  }, [readToken]);
+
+  const getToken = useCallback(() => {
+    const { token, expiry } = readToken();
+    if (!token || Date.now() >= Number(expiry)) return null;
+    return token;
+  }, [readToken]);
 
   const fetchEvents = useCallback(async (token) => {
     if (!token) {
@@ -68,6 +91,38 @@ export const useGoogleCalendar = () => {
     }
   }, [clearTokens]);
 
+  const fetchEventsInRange = useCallback(async (timeMin, timeMax, maxResults = 250) => {
+    const token = getToken();
+    if (!token) {
+      setError('No authentication token found');
+      setIsAuthenticated(false);
+      return [];
+    }
+
+    try {
+      const response = await axios.get('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          timeMin: timeMin ?? new Date().toISOString(),
+          ...(timeMax ? { timeMax } : {}),
+          maxResults,
+          singleEvents: true,
+          orderBy: 'startTime',
+        },
+      });
+      return response.data.items || [];
+    } catch (err) {
+      console.error('Error fetching events in range:', err);
+      if (err.response?.status === 401) {
+        clearTokens();
+        setError('Google Calendar session expired. Please reconnect.');
+      } else {
+        setError('Failed to fetch calendar events. Please try again later.');
+      }
+      return [];
+    }
+  }, [getToken, clearTokens]);
+
   const login = useGoogleLogin({
     scope: 'https://www.googleapis.com/auth/calendar.readonly',
     onSuccess: async (response) => {
@@ -75,10 +130,8 @@ export const useGoogleCalendar = () => {
       setIsAuthenticated(true);
       
       // Store token with expiry time (1 hour from now)
-      const expiryTime = new Date().getTime() + (60 * 60 * 1000);
-      localStorage.setItem('google_token', response.access_token);
-      localStorage.setItem('google_token_expiry', expiryTime.toString());
-      
+      const expiryTime = Date.now() + 60 * 60 * 1000;
+      writeToken(response.access_token, expiryTime);
       fetchEvents(response.access_token);
     },
     onError: (error) => {
@@ -107,8 +160,7 @@ export const useGoogleCalendar = () => {
 
   // Check token validity on mount and set up periodic check
   useEffect(() => {
-    const token = localStorage.getItem('google_token');
-    
+    const token = getToken();
     if (token && checkTokenExpiry()) {
       setIsAuthenticated(true);
       fetchEvents(token);
@@ -125,7 +177,7 @@ export const useGoogleCalendar = () => {
     }, 60000);
 
     return () => clearInterval(interval);
-  }, [checkTokenExpiry, fetchEvents, clearTokens]);
+  }, [checkTokenExpiry, fetchEvents, clearTokens, getToken]);
 
   return {
     events,
@@ -135,6 +187,8 @@ export const useGoogleCalendar = () => {
     login,
     disconnect,
     refreshEvents,
-    clearError: () => setError(null)
+    clearError: () => setError(null),
+    fetchEventsInRange,
+    getToken
   };
 }; 

@@ -9,35 +9,10 @@ import {
 /**
  * Awards stars to a partner and creates a transaction record
  */
+// Deprecated: client-side direct award has been replaced by callable 'awardStars'
+// Keeping a thin wrapper for backward compat in case some page still imports it.
 export async function awardStarsToPartner(db, fromUserId, toUserId, amount, reason, category) {
-  if (!fromUserId || !toUserId || !amount) {
-    throw new Error('Missing required parameters');
-  }
-
-  const batch = writeBatch(db);
-
-  // Update partner's star count
-  const partnerRef = doc(db, 'users', toUserId);
-  batch.update(partnerRef, {
-    stars: increment(amount),
-    updatedAt: serverTimestamp()
-  });
-
-  // Create transaction record
-  const transactionRef = doc(collection(db, 'transactions'));
-  batch.set(transactionRef, {
-    from: fromUserId,
-    to: toUserId,
-    amount,
-    reason,
-    category,
-    type: 'AWARD',
-    participants: [fromUserId, toUserId],
-    createdAt: serverTimestamp()
-  });
-
-  await batch.commit();
-  return { success: true };
+  throw new Error('awardStarsToPartner is deprecated. Use the awardStars callable via useStarsActions().');
 }
 
 /**

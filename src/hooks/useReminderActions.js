@@ -1,12 +1,5 @@
-import { 
-  collection, 
-  addDoc, 
-  deleteDoc, 
-  doc, 
-  updateDoc, 
-  serverTimestamp 
-} from 'firebase/firestore';
-import { db } from '../firebase';
+import { serverTimestamp } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 export const useReminderActions = (user, userData, setError) => {
   const handleCreateReminder = async (e, formData) => {
@@ -14,17 +7,12 @@ export const useReminderActions = (user, userData, setError) => {
     if (!user?.uid || !formData.title.trim()) return;
 
     try {
-      const remindersRef = collection(db, 'reminders');
-      await addDoc(remindersRef, {
+      const fn = httpsCallable(getFunctions(), 'createReminder');
+      await fn({
         title: formData.title.trim(),
         description: formData.description.trim(),
         category: formData.category,
         date: formData.date.toISOString(),
-        owner: user.uid,
-        participants: [user.uid, userData?.partnerId].filter(Boolean),
-        completed: false,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
       });
 
       return true; // Success
@@ -40,13 +28,13 @@ export const useReminderActions = (user, userData, setError) => {
     if (!user?.uid || !editingReminder || !formData.title.trim()) return;
 
     try {
-      const reminderRef = doc(db, 'reminders', editingReminder.id);
-      await updateDoc(reminderRef, {
+      const fn = httpsCallable(getFunctions(), 'updateReminder');
+      await fn({
+        id: editingReminder.id,
         title: formData.title.trim(),
         description: formData.description.trim(),
         category: formData.category,
         date: formData.date.toISOString(),
-        updatedAt: serverTimestamp()
       });
 
       return true; // Success
@@ -61,8 +49,8 @@ export const useReminderActions = (user, userData, setError) => {
     if (!user?.uid) return;
 
     try {
-      const reminderRef = doc(db, 'reminders', reminderId);
-      await deleteDoc(reminderRef);
+      const fn = httpsCallable(getFunctions(), 'deleteReminder');
+      await fn({ id: reminderId });
     } catch (error) {
       console.error("Error deleting reminder:", error);
       setError("Failed to delete reminder");
@@ -73,11 +61,8 @@ export const useReminderActions = (user, userData, setError) => {
     if (!user?.uid || !reminder) return;
 
     try {
-      const reminderRef = doc(db, 'reminders', reminder.id);
-      await updateDoc(reminderRef, {
-        completed: !reminder.completed,
-        updatedAt: serverTimestamp()
-      });
+      const fn = httpsCallable(getFunctions(), 'toggleReminder');
+      await fn({ reminderId: reminder.id, completed: !reminder.completed });
     } catch (error) {
       console.error("Error toggling reminder:", error);
       setError("Failed to toggle reminder");

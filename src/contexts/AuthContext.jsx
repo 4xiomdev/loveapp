@@ -254,24 +254,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Award stars to partner (direct write)
-  const awardPartnerStars = async (partnerId, starAmount) => {
-    if (!user) throw new Error('Please sign in to award stars');
-    if (!partnerId) throw new Error('No partner to award stars to');
-
-    try {
-      const partnerRef = doc(db, 'users', partnerId);
-      await updateDoc(partnerRef, {
-        stars: (partnerData?.stars || 0) + starAmount,
-        updatedAt: serverTimestamp()
-      });
-
-      return true;
-    } catch (error) {
-      console.error('Error awarding stars:', error);
-      throw error;
-    }
-  };
+  
 
   // Debug partner state
   const debugPartnerState = async (partnerEmail) => {
@@ -370,6 +353,8 @@ export function AuthProvider({ children }) {
     user,
     userData,
     partnerData,
+    isAuthenticated: !!user,
+    isAdmin: !!user && (user?.uid === 'XGOegzsmohXhZtJT9ZE2uxaw4J83' || user?.customClaims?.admin === true || userData?.isAdmin === true),
     loading: loading || dataLoading,
     error,
     signIn,
@@ -379,7 +364,6 @@ export function AuthProvider({ children }) {
     unlinkPartner,
     debugPartnerState,
     updateUserSettings,
-    awardPartnerStars,
     clearError
   };
 

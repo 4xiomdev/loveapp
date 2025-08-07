@@ -3,19 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { usePartnerData } from '../hooks/usePartnerData';
 import { db } from "../firebase";
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  onSnapshot,
-  addDoc,
-  deleteDoc,
-  doc,
-  updateDoc,
-  serverTimestamp,
-  getDoc,
-} from "firebase/firestore";
+import { serverTimestamp } from "firebase/firestore";
 import {
   Box,
   Typography,
@@ -60,6 +48,7 @@ import { GlowingText } from '../components/reminders/StyledComponents';
 import { REMINDER_CATEGORIES, VIEW_MODES } from '../constants/reminderConstants';
 import { filterReminders, canModifyReminder, groupRemindersByDate } from '../utils/reminderHelpers';
 import { useReminderActions } from '../hooks/useReminderActions';
+import { useRemindersQuery, usePartnerRemindersQuery } from '@/hooks/useRemindersQuery';
 
 
 
@@ -102,93 +91,19 @@ export default function RemindersPage() {
     setLoading(false);
   }, [user, navigate]);
 
-  // Fetch user's reminders
+  // Fetch user's reminders via React Query
+  const { data: remindersData, isLoading: remindersLoading, error: remindersError } = useRemindersQuery(user?.uid);
   useEffect(() => {
-    let unsubscribe = null;
-    let isMounted = true;
+    if (remindersData) setReminders(remindersData.map(r => ({ ...r, date: r.date || format(new Date(), 'yyyy-MM-dd') })));
+    if (remindersError) setError(remindersError.message || 'Failed to load reminders');
+    setLoading(remindersLoading);
+  }, [remindersData, remindersError, remindersLoading]);
 
-    const setupSubscription = async () => {
-      if (!user?.uid) return;
-
-      try {
-        // Query for user's reminders
-        const reminderQuery = query(
-          collection(db, "reminders"),
-          where("owner", "==", user.uid),
-          orderBy("createdAt", "desc")
-        );
-
-        unsubscribe = onSnapshot(reminderQuery, (snapshot) => {
-          if (!isMounted) return;
-          const remindersList = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            date: doc.data().date || format(new Date(), 'yyyy-MM-dd')
-          }));
-          setReminders(remindersList);
-          setLoading(false);
-          setError(null);
-        }, (err) => {
-          console.error("Error fetching reminders:", err);
-          if (isMounted) {
-            setError(err.message);
-            setLoading(false);
-          }
-        });
-      } catch (err) {
-        console.error("Error setting up subscription:", err);
-        if (isMounted) {
-          setError("Failed to connect to the reminders service.");
-          setLoading(false);
-        }
-      }
-    };
-
-    setupSubscription();
-
-    return () => {
-      isMounted = false;
-      if (unsubscribe) unsubscribe();
-    };
-  }, [user?.uid]);
-
-  // Add new effect for partner's reminders
+  // Partner reminders via React Query
+  const { data: partnerDataList } = usePartnerRemindersQuery(userData?.partnerId);
   useEffect(() => {
-    let unsubscribe = null;
-    let isMounted = true;
-
-    const setupPartnerSubscription = async () => {
-      if (!user?.uid || !userData?.partnerId) return;
-
-      try {
-        // Query for partner's reminders
-        const partnerQuery = query(
-          collection(db, "reminders"),
-          where("owner", "==", userData.partnerId),
-          orderBy("createdAt", "desc")
-        );
-
-        unsubscribe = onSnapshot(partnerQuery, (snapshot) => {
-          if (!isMounted) return;
-          const partnerList = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            date: doc.data().date || format(new Date(), 'yyyy-MM-dd')
-          }));
-          setPartnerReminders(partnerList);
-        });
-      } catch (err) {
-        console.error("Error fetching partner's reminders:", err);
-      }
-    };
-
-    setupPartnerSubscription();
-
-    return () => {
-      isMounted = false;
-      if (unsubscribe) unsubscribe();
-    };
-  }, [user?.uid, userData?.partnerId]);
+    if (partnerDataList) setPartnerReminders(partnerDataList.map(r => ({ ...r, date: r.date || format(new Date(), 'yyyy-MM-dd') })));
+  }, [partnerDataList]);
 
   // Wrapper functions to handle form logic
   const handleCreateReminderSubmit = async (e) => {

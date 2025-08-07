@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { ThemeProvider as MuiThemeProvider, CssBaseline } from '@mui/material';
 import { THEME_OPTIONS } from '../themes/themeConfig';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
@@ -32,9 +32,7 @@ export const ThemeProvider = ({ children }) => {
     if (user) {
       try {
         const userRef = doc(db, "users", user.uid);
-        await updateDoc(userRef, {
-          theme: newTheme
-        });
+        await updateDoc(userRef, { theme: newTheme });
       } catch (error) {
         console.error("Error updating theme:", error);
         // Revert local changes if server update fails
@@ -57,25 +55,27 @@ export const ThemeProvider = ({ children }) => {
   // Sync with Firestore when user changes
   useEffect(() => {
     if (!user) return;
-    
-    const unsubscribe = onSnapshot(doc(db, "users", user.uid), (doc) => {
-      if (doc.exists() && doc.data().theme && THEME_OPTIONS[doc.data().theme]) {
-        const firestoreTheme = doc.data().theme;
-        setCurrentTheme(firestoreTheme);
-        localStorage.setItem('userTheme', firestoreTheme);
+    const unsubscribe = onSnapshot(doc(db, "users", user.uid), (snap) => {
+      if (snap.exists()) {
+        const t = snap.data().theme;
+        if (t && THEME_OPTIONS[t] && t !== currentTheme) {
+          setCurrentTheme(t);
+          localStorage.setItem('userTheme', t);
+        }
       }
     });
-
     return () => unsubscribe();
-  }, [user]);
+  }, [user, currentTheme]);
 
   if (!theme) {
     console.error('Theme not found:', currentTheme);
     return null;
   }
 
+  const ctxValue = useMemo(() => ({ currentTheme, changeTheme, themeOptions: Object.keys(THEME_OPTIONS) }), [currentTheme]);
+
   return (
-    <ThemeContext.Provider value={{ currentTheme, changeTheme, themeOptions: Object.keys(THEME_OPTIONS) }}>
+    <ThemeContext.Provider value={ctxValue}>
       <MuiThemeProvider theme={theme}>
         <CssBaseline />
         {children}

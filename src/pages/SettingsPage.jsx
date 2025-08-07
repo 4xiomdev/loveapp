@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { db, auth } from '../firebase';
+import { db, auth, storage } from '../firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
   Box,
   Container,
@@ -109,42 +110,27 @@ export default function SettingsPage() {
     setError('');
 
     try {
-      // Convert image to base64 for Firestore (full quality)
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const fullSizeImage = e.target.result;
-          // Get compressed version for Auth profile
-          const compressedImage = await compressImage(file);
+      // Upload original file to Storage
+      const storageRef = ref(storage, `users/${user.uid}/profile.jpg`);
+      await uploadBytes(storageRef, file, { contentType: file.type });
+      const downloadUrl = await getDownloadURL(storageRef);
 
-          // Update Auth Profile with compressed image
-          await updateProfile(auth.currentUser, { photoURL: compressedImage });
+      // Update Auth Profile with compressed thumbnail for faster auth propagation
+      const compressedImage = await compressImage(file);
+      await updateProfile(auth.currentUser, { photoURL: compressedImage });
 
-          // Update Firestore with full-size image
-          const userRef = doc(db, 'users', user.uid);
-          await updateDoc(userRef, {
-            photoURL: fullSizeImage,
-            updatedAt: serverTimestamp()
-          });
+      // Update Firestore with Storage URL
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        photoURL: downloadUrl,
+        updatedAt: serverTimestamp()
+      });
 
-          setSuccess('Profile picture updated successfully!');
-        } catch (err) {
-          console.error('Error updating photo:', err);
-          setError('Failed to update profile picture. Please try again.');
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      reader.onerror = () => {
-        setError('Failed to read the image file');
-        setLoading(false);
-      };
-
-      reader.readAsDataURL(file);
+      setSuccess('Profile picture updated successfully!');
     } catch (err) {
-      console.error('Error handling photo:', err);
-      setError('Failed to process the image. Please try again.');
+      console.error('Error updating photo:', err);
+      setError('Failed to update profile picture. Please try again.');
+    } finally {
       setLoading(false);
     }
   };

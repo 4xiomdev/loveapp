@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Box, Typography, Paper, Button, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, alpha, Alert, Tooltip, Switch, FormControlLabel, Tabs, Tab, CircularProgress, Snackbar, Grid, ToggleButtonGroup, ToggleButton, Drawer, Divider, Backdrop, useTheme } from '@mui/material';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import './calendar-styles.css';
+import '@/calendar-styles.css';
 import { format, parse, startOfWeek, getDay, addMinutes } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { useAuth } from '../contexts/AuthContext';
@@ -14,7 +14,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import GoogleIcon from '@mui/icons-material/Google';
 import { motion } from 'framer-motion';
 import { usePartnerData } from '../hooks/usePartnerData';
-import { useGoogleLogin } from '@react-oauth/google';
+import { useGoogleCalendar } from '../hooks/useGoogleCalendar';
 import axios from 'axios';
 import SyncIcon from '@mui/icons-material/Sync';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -641,60 +641,11 @@ const SchedulePage = () => {
     setOpenaiApiKey(import.meta.env.VITE_OPENAI_API_KEY || '');
   }, []);
 
-  const login = useGoogleLogin({
-    scope: 'https://www.googleapis.com/auth/calendar.readonly',
-    onSuccess: async (response) => {
-      setError(null);
-      setIsGoogleCalendarConnected(true);
-      
-      const expiryTime = new Date().getTime() + (60 * 60 * 1000);
-      const tokenData = {
-        token: response.access_token,
-        expiry: expiryTime,
-        userId: user.uid
-      };
-      
-      localStorage.setItem('google_calendar_data', JSON.stringify(tokenData));
-      syncGoogleCalendarEvents(response.access_token);
-    },
-    onError: (error) => {
-      console.error('Login Failed:', error);
-      setError('Failed to connect to Google Calendar. Please try again.');
-      setIsGoogleCalendarConnected(false);
-    },
-    flow: 'implicit',
-    ux_mode: 'popup'
-  });
+  const { login, fetchEventsInRange, getToken } = useGoogleCalendar();
 
   useEffect(() => {
-    const tokenData = localStorage.getItem('google_calendar_data');
-    
-    if (tokenData && user?.uid) {
-      try {
-        const { token, expiry, userId } = JSON.parse(tokenData);
-        
-        if (userId === user.uid && expiry > new Date().getTime()) {
-          setIsGoogleCalendarConnected(true);
-          
-          getDoc(doc(db, 'users', user.uid)).then(docSnap => {
-            if (docSnap.exists()) {
-              const userData = docSnap.data();
-              if (userData.lastCalendarSync) {
-                const lastSyncDate = userData.lastCalendarSync.toDate();
-                setLastSync(lastSyncDate.getTime());
-              }
-            }
-          });
-        } else {
-          localStorage.removeItem('google_calendar_data');
-          setIsGoogleCalendarConnected(false);
-        }
-      } catch (error) {
-        console.error('Error parsing token data:', error);
-        localStorage.removeItem('google_calendar_data');
-        setIsGoogleCalendarConnected(false);
-      }
-    }
+    const token = getToken();
+    if (token) setIsGoogleCalendarConnected(true);
 
     const interval = setInterval(() => {
       const currentTokenData = localStorage.getItem('google_calendar_data');
@@ -830,25 +781,13 @@ const SchedulePage = () => {
     setError(null);
     
     try {
-      const response = await axios.get(
-        'https://www.googleapis.com/calendar/v3/calendars/primary/events',
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          params: {
-            timeMin: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString(),
-            timeMax: new Date(new Date().setMonth(new Date().getMonth() + 6)).toISOString(),
-            maxResults: 250,
-            singleEvents: true,
-            orderBy: 'startTime',
-          },
-        }
+      const items = await fetchEventsInRange(
+        new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString(),
+        new Date(new Date().setMonth(new Date().getMonth() + 6)).toISOString(),
+        250
       );
 
-      const formattedEvents = response.data.items.map(event => {
+      const formattedEvents = items.map(event => {
         const isAllDay = !event.start.dateTime;
         
         return {
@@ -910,24 +849,13 @@ const SchedulePage = () => {
     if (!user?.uid) return;
     
     try {
-      const tokenData = localStorage.getItem('google_calendar_data');
-      if (!tokenData) {
-        throw new Error('No valid calendar connection found');
-      }
-
-      const { token, expiry, userId } = JSON.parse(tokenData);
-      if (userId !== user.uid || expiry <= new Date().getTime()) {
-        throw new Error('Calendar session expired. Please reconnect.');
-      }
-      
+      const token = getToken();
+      if (!token) throw new Error('Calendar session expired. Please reconnect.');
       await syncGoogleCalendarEvents(token);
     } catch (error) {
       console.error('Error syncing calendar:', error);
       setError(error.message || 'Failed to sync calendar');
-      if (error && typeof error === 'string' && error.includes('expired')) {
-        localStorage.removeItem('google_calendar_data');
-        setIsGoogleCalendarConnected(false);
-      }
+      setIsGoogleCalendarConnected(false);
     }
   };
 

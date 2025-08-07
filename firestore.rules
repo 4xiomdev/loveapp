@@ -75,9 +75,11 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated() && resource.data.owner == request.auth.uid;
     }
 
-    // Reminders collection
+    // Reminders collection - only owners can write
     match /reminders/{reminderId} {
-      allow create, update, delete: if isAuthenticated();
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.owner == request.auth.uid;
+      allow update, delete: if isAuthenticated() && resource.data.owner == request.auth.uid;
     }
 
     // Daily status collection

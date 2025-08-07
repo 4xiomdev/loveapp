@@ -78,7 +78,7 @@ function App() {
               <Route path="/valentine" element={<ValentineProposalPage />} />
               
               {/* Protected app routes */}
-              <Route path="/app/*" element={<ProtectedRoute />}>
+               <Route path="/app/*" element={<ProtectedRoute />}>
                 <Route element={<DashboardLayout />}>
                   <Route index element={<HomePage />} />
                   <Route path="messages" element={<MessagesPage />} />
@@ -93,7 +93,7 @@ function App() {
                     <Route index element={<AdminDashboardPage />} />
                     <Route path="firestore" element={<FirestoreManagerPage />} />
                   </Route>
-                  <Route path="schedule" element={<SchedulePage />} />
+                   <Route path="schedule" element={<SchedulePage />} />
                   <Route path="mood" element={<MoodTrackerPage />} />
                 </Route>
               </Route>

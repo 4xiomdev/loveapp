@@ -57,7 +57,8 @@ import Confetti from "react-confetti";
 import { usePartnerData } from '../hooks/usePartnerData';
 import NoPartnerState from '../components/NoPartnerState';
 import { formatDistanceToNow } from 'date-fns';
-import { awardStarsToPartner, redeemStarsForCoupon, approveStarAward } from '../utils/starOperations';
+import { redeemStarsForCoupon, approveStarAward } from '../utils/starOperations';
+import { useStarsActions } from '@/hooks/useStarsActions';
 
 const STAR_CATEGORIES = [
   { value: 'achievement', label: 'Achievement', icon: '🏆' },
@@ -87,6 +88,7 @@ const TRANSACTION_FILTERS = [
  * - On awarding, increments partner's star count in /users/{partnerId}.
  */
 export default function StarsPage() {
+  const { awardStars } = useStarsActions();
   const { user, userData } = useAuth();
   const navigate = useNavigate();
   const { partnerData, loading: partnerLoading, error: partnerError, isSoloMode } = usePartnerData();
@@ -282,10 +284,8 @@ export default function StarsPage() {
 
     setIsAwarding(true);
     try {
-      await awardStarsToPartner(
-        db,
-        user.uid,  // from current user
-        userData.partnerId,  // to partner
+      await awardStars(
+        userData.partnerId,
         awardAmount,
         awardReason.trim(),
         awardCategory
